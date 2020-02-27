@@ -10,6 +10,7 @@ import Profil from '../../App/Home/Profil';
 import Chat from '../../App/Home/Chat';
 import Account from '../../App/Account';
 import Contactss from '../../App/Contact/Contact';
+import Mapss from '../../App/Maps/Maps';
 
 class Toggle extends Component {
   toggleDrawer = () => {
@@ -185,6 +186,17 @@ const ContactScreen = createStackNavigator({
       },
       headerTintColor: '#fff'
     })
+  },
+  Maps: {
+    screen: Mapss,
+    navigationOptions: ({ navigation }) => ({
+      title: false,
+      headerLeft: <BackHome navigationProps={navigation} />,
+      headerStyle: {
+        backgroundColor: '#45c8dc'
+      },
+      headerTintColor: '#fff'
+    })
   }
 });
 
@@ -219,6 +231,22 @@ const ProfilScreen = createStackNavigator({
     })
   }
 });
+
+// const MapsScreen = createStackNavigator({
+//   Maps: {
+//     screen: Maps,
+//     navigationOptions: ({ navigation }) => ({
+//       title: false,
+//       headerLeft: <BackHome navigationProps={navigation} />,
+//       headerStyle: {
+//         backgroundColor: '#45c8dc',
+//         elevation: 0, // remove shadow on Android
+//         shadowOpacity: 0 // remove shadow on iOS
+//       },
+//       headerTintColor: '#fff'
+//     })
+//   }
+// });
 
 export default createDrawerNavigator(
   {

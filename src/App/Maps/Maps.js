@@ -85,80 +85,11 @@ class App extends Component {
       // contact has been saved
     });
   }
-
-  onMaps = item => {
-    this.props.navigation.navigate('Maps', { mapData: item });
-  };
   render() {
-    let contactEmail = [];
-    this.state.contacts.map((item, index) => {
-      let emailList = item.emailAddresses;
-      if (emailList.length > 0) {
-        item.emailAddresses.map((item2, index2) => {
-          let data = Object.values(item2)[2];
-          contactEmail.push(data);
-        });
-      }
-    });
-
-    let userId = app.auth().currentUser.uid;
-    let contactData = [];
-    this.state.data.map((item, index) => {
-      contactEmail.map((item2, index2) => {
-        if (item.uid !== userId && item.email === item2) {
-          contactData.push(item);
-        }
-      });
-    });
-
+    console.log(this.props.navigation.state.params);
     return (
-      <View style={styles.wrapper}>
-        <Statusbar />
-        <FlatList
-          data={contactData}
-          keyExtractor={item => item.id}
-          renderItem={({ item, index }) => {
-            return (
-              <View style={styles.wrapp}>
-                <TouchableOpacity
-                  style={styles.listcontact}
-                  onPress={() => this.addChat(item)}>
-                  <View style={styles.chat__list}>
-                    <View style={styles.chat__img}>
-                      <Image
-                        style={styles.chat__img2}
-                        resizeMode="cover"
-                        source={{
-                          uri: `data:image/jpeg;base64,${item.avatar}`
-                        }}
-                      />
-                    </View>
-                    <View style={styles.chat__con}>
-                      <Text style={styles.name__list}>{item.name}</Text>
-                      <Text style={styles.bio__list}>{item.email}</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => this.onMaps(item)}>
-                  <View style={styles.chat__list2}>
-                    <Image
-                      source={require('../../Public/Assets/icons/location.png')}
-                      style={styles.icon__loc}
-                    />
-                  </View>
-                </TouchableOpacity>
-              </View>
-            );
-          }}
-        />
-        <TouchableOpacity
-          style={styles.set__circle}
-          onPress={() => this.addContact()}>
-          <Image
-            source={require('../../Public/Assets/icons/addContact.png')}
-            style={styles.set__circle2}
-          />
-        </TouchableOpacity>
+      <View>
+        <Text>Helo</Text>
       </View>
     );
   }
