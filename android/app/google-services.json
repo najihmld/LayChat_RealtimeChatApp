@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "830152642202",
+    "firebase_url": "https://laychat-c44af.firebaseio.com",
+    "project_id": "laychat-c44af",
+    "storage_bucket": "laychat-c44af.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:830152642202:android:973bd756783fad13bf5923",
+        "android_client_info": {
+          "package_name": "com.laychat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "830152642202-4dh52vbma2okkbopa1mpffe73cmvmpf2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBD50FGdZBEs_oOiFsunR7VwFG3H9urWM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "830152642202-4dh52vbma2okkbopa1mpffe73cmvmpf2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
