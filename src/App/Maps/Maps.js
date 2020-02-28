@@ -1,198 +1,212 @@
 import React, { Component } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  FlatList,
-  Image,
-  TouchableOpacity,
-  PermissionsAndroid,
-  Platform
-} from 'react-native';
-import Statusbar from '../../Public/Components/GeneralStatusBar';
-import { app, db } from '../../Config/firebase';
-import Contacts from 'react-native-contacts';
+import { View, StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
+import Dialog from 'react-native-dialog';
+import { ListItem } from 'react-native-elements';
 
-class App extends Component {
+class Maps extends Component {
   state = {
-    userId: app.auth().currentUser.uid,
-    data: [],
-    contacts: []
+    dialogProfile: false,
+    name: '',
+    data: []
+  };
+  handleProfile = () => {
+    this.setState({ dialogProfile: false });
   };
 
-  componentDidMount() {
-    this.getData();
-  }
-
-  async componentWillMount() {
-    if (Platform.OS === 'android') {
-      PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_CONTACTS, {
-        title: 'Contacts',
-        message: 'This app would like to view your contacts.'
-      }).then(() => {
-        this.loadContacts();
-      });
-    } else {
-      this.loadContacts();
-    }
-  }
-
-  getData = () => {
-    try {
-      db.ref('/users').on('value', res => {
-        let data = res.val();
-        const objectToArray = Object.values(data);
-        // console.log(objectToArray);
-        this.setState({ data: objectToArray });
-      });
-    } catch (error) {
-      // console.log(error);
-    }
+  showDialogProfile = () => {
+    this.setState({ dialogProfile: true });
   };
 
-  addChat = item => {
-    this.props.navigation.navigate('Chat', { listChat: item });
+  handleMove = () => {
+    const data = this.props.navigation.state.params.myData;
+    // eslint-disable-next-line react/no-string-refs
+    this.refs.map.animateToRegion(
+      {
+        latitude: data.latitude,
+        longitude: data.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02
+      },
+      3000
+    );
   };
-  onProfile = item => {
-    this.props.navigation.navigate('Profil', { tes: 'lolll' });
-  };
 
-  loadContacts() {
-    Contacts.getAll((err, contacts) => {
-      if (err === 'denied') {
-        // console.warn('Permission to access contacts was denied');
-      } else {
-        this.setState({ contacts });
-      }
-    });
-  }
-
-  addContact() {
-    var newPerson = {
-      emailAddresses: [
-        {
-          label: '',
-          email: ''
-        }
-      ],
-      displayName: ''
-    };
-
-    Contacts.openContactForm(newPerson, (err, contact) => {
-      if (err) {
-        throw err;
-      }
-      // contact has been saved
-    });
-  }
   render() {
-    console.log(this.props.navigation.state.params);
+    const loc = this.props.navigation.state.params.mapData;
+    // const myLoc = this.props.navigation.state.params;
+    const myData = this.props.navigation.state.params.myData;
+
     return (
-      <View>
-        <Text>Helo</Text>
+      <View style={styles.container}>
+        <MapView
+          // eslint-disable-next-line react/no-string-refs
+          ref="map"
+          provider={PROVIDER_GOOGLE} // remove if not using Google Maps
+          style={styles.map}
+          region={{
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.0121
+          }}>
+          <MapView.Marker
+            onPress={() => this.showDialogProfile()}
+            coordinate={{
+              latitude: loc.latitude,
+              longitude: loc.longitude
+            }}>
+            <TouchableOpacity>
+              <Image
+                resizeMode="cover"
+                source={{
+                  uri: `data:image/jpeg;base64,${loc.avatar}`
+                }}
+                style={styles.pin__avatar}
+              />
+              <View style={styles.pin__avatar2} />
+            </TouchableOpacity>
+          </MapView.Marker>
+          <MapView.Marker
+            coordinate={{
+              latitude: myData.latitude,
+              longitude: myData.longitude
+            }}>
+            <TouchableOpacity>
+              <Image
+                resizeMode="cover"
+                source={{
+                  uri: `data:image/jpeg;base64,${myData.avatar}`
+                }}
+                style={styles.pin__avatar}
+              />
+              <View style={styles.pin__avatar2} />
+            </TouchableOpacity>
+          </MapView.Marker>
+        </MapView>
+
+        <TouchableOpacity onPress={this.handleMove} style={styles.icon__loc}>
+          <Image source={require('../../Public/Assets/icons/myloc.png')} />
+        </TouchableOpacity>
+        <Dialog.Container visible={this.state.dialogProfile}>
+          <View style={styles.list__setting}>
+            <Text style={styles.h2}>Info Account</Text>
+          </View>
+          <View style={styles.items}>
+            <View style={styles.subtitle__list}>
+              <Text style={styles.subtitle__list__text}>Name</Text>
+            </View>
+            <ListItem title={loc.name} style={styles.list__item} />
+          </View>
+          <View style={styles.items}>
+            <View style={styles.subtitle__list}>
+              <Text style={styles.subtitle__list__text}>Email</Text>
+            </View>
+            <ListItem title={loc.email} style={styles.list__item} />
+          </View>
+          <View style={styles.items}>
+            <View style={styles.subtitle__list}>
+              <Text style={styles.subtitle__list__text}>Bio</Text>
+            </View>
+            <ListItem title={loc.bio} style={styles.list__item} />
+          </View>
+
+          <Dialog.Button
+            color={'#45c8dc'}
+            label="Hide"
+            onPress={() => {
+              this.handleProfile();
+            }}
+          />
+        </Dialog.Container>
       </View>
     );
   }
 }
 
-export default App;
+export default Maps;
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    backgroundColor: '#fff'
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    alignItems: 'center'
   },
-  wrapp: {
-    flexDirection: 'row'
+  map: {
+    ...StyleSheet.absoluteFillObject
   },
-  chat__list: {
-    marginBottom: 1,
-    borderBottomWidth: 1,
-    borderColor: '#eaeaea',
-    padding: 12,
-    paddingLeft: 15,
-    flexDirection: 'row'
-  },
-  chat__list2: {
-    marginBottom: 1,
-    borderBottomWidth: 1,
-    borderColor: '#eaeaea',
-    // backgroundColor: '#fff',
-    paddingTop: 12,
-    paddingLeft: 50,
-    flexDirection: 'row',
-    paddingBottom: 32,
-    marginTop: 10
-  },
-  chat__img: {
+  pin__avatar: {
     height: 60,
     width: 60,
     borderRadius: 60 / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
     borderWidth: 4,
-    borderColor: '#45c8dc'
+    borderColor: '#45c8dc',
+    padding: 4
   },
-  chat__img2: {
-    height: 55,
-    width: 55,
-    borderRadius: 55 / 2,
-    borderWidth: 1.6,
-    borderColor: '#fff'
-  },
-  chat__con: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    flex: 1,
-    marginLeft: 15
-  },
-  name__list: {
-    fontFamily: 'Raleway-Medium',
-    fontSize: 18,
-    marginBottom: 2,
-    color: '#1e3347'
-  },
-  listcontact: {
-    width: 280
-  },
-  bio__list: {
-    fontFamily: 'Raleway-Medium',
-    fontSize: 14,
-    marginBottom: 2,
-    color: '#61707e'
-  },
-  message__list: {
-    fontFamily: 'Roboto-Regular',
-    fontSize: 14,
-    color: 'gray'
-  },
-  set__circle: {
-    height: 50,
-    width: 50,
-    padding: 5,
-    borderRadius: 50 / 2,
+  pin__avatar2: {
+    height: 30,
+    width: 4,
     backgroundColor: '#45c8dc',
-    justifyContent: 'center',
-    elevation: 8,
-    marginRight: 20,
-    zIndex: 100,
-    position: 'absolute',
-    right: 0,
-    bottom: 20
+    alignSelf: 'center',
+    borderBottomRightRadius: 10,
+    borderBottomLeftRadius: 10
   },
-  set__circle2: {
-    height: 28,
-    width: 28,
+  dialogProfile: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  dialogProfile2: {
+    height: 200,
+    width: 300,
+    position: 'absolute',
+    top: 0,
     alignSelf: 'center'
   },
+  h2: {
+    fontSize: 16,
+    color: '#45c8dc',
+    fontFamily: 'Raleway-Medium'
+  },
+  set__item: {
+    height: 20,
+    width: 20,
+    alignSelf: 'flex-end',
+    position: 'absolute',
+    bottom: 18,
+    right: 20
+  },
+  subtitle__list: {
+    backgroundColor: 'transparent',
+    paddingLeft: 15,
+    bottom: 40,
+    zIndex: 500,
+    position: 'absolute'
+  },
+  subtitle__list__text: {
+    color: '#a9a9a9',
+    fontSize: 14
+  },
+  list__item: {
+    paddingTop: 10,
+    backgroundColor: '#fff'
+  },
+
+  dialogMargin: {
+    marginTop: 200
+  },
+  iconContact: {
+    width: 25,
+    height: 25,
+    marginLeft: 15
+  },
+  iconSet: {
+    width: 25,
+    height: 25,
+    marginLeft: 15
+  },
   icon__loc: {
-    height: 30,
-    width: 30,
-    marginLeft: -20
+    right: 30,
+    bottom: 30,
+    position: 'absolute'
   }
-  // location: {
-  //   justifyContent: 'center',
-  //   alignItems: 'center',
-  //   alignSelf: 'center'
-  // }
 });

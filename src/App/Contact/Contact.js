@@ -7,21 +7,28 @@ import {
   Image,
   TouchableOpacity,
   PermissionsAndroid,
-  Platform
+  Platform,
+  ToastAndroid
 } from 'react-native';
 import Statusbar from '../../Public/Components/GeneralStatusBar';
 import { app, db } from '../../Config/firebase';
 import Contacts from 'react-native-contacts';
+import Geolocation from 'react-native-geolocation-service';
 
 class App extends Component {
   state = {
     userId: app.auth().currentUser.uid,
     data: [],
-    contacts: []
+    myData: [],
+    contacts: [],
+    myLatitude: '',
+    myLongitude: ''
   };
 
   componentDidMount() {
     this.getData();
+    this.getmyData();
+    this.getLocationUpdates();
   }
 
   async componentWillMount() {
@@ -37,6 +44,72 @@ class App extends Component {
     }
   }
 
+  hasLocationPermission = async () => {
+    if (
+      Platform.OS === 'ios' ||
+      (Platform.OS === 'android' && Platform.Version < 23)
+    ) {
+      return true;
+    }
+
+    const hasPermission = await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+    );
+
+    if (hasPermission) {
+      return true;
+    }
+
+    const status = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+    );
+
+    if (status === PermissionsAndroid.RESULTS.GRANTED) {
+      return true;
+    }
+
+    if (status === PermissionsAndroid.RESULTS.DENIED) {
+      ToastAndroid.show(
+        'Location permission denied by user.',
+        ToastAndroid.LONG
+      );
+    } else if (status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+      ToastAndroid.show(
+        'Location permission revoked by user.',
+        ToastAndroid.LONG
+      );
+    }
+
+    return false;
+  };
+
+  getLocationUpdates = async () => {
+    const hasLocationPermission = await this.hasLocationPermission();
+    if (!hasLocationPermission) {
+      return;
+    }
+    this.setState({ updatesEnabled: true }, () => {
+      this.watchId = Geolocation.watchPosition(
+        position => {
+          this.setState({
+            myLatitude: position.coords.latitude,
+            myLongitude: position.coords.longitude
+          });
+        },
+        error => {
+          this.setState({ myLatitude: error, myLongitude: error });
+          // console.log(error);
+        },
+        {
+          enableHighAccuracy: true,
+          distanceFilter: 0,
+          interval: 5000,
+          fastestInterval: 2000
+        }
+      );
+    });
+  };
+
   getData = () => {
     try {
       db.ref('/users').on('value', res => {
@@ -49,12 +122,19 @@ class App extends Component {
       // console.log(error);
     }
   };
+  getmyData = () => {
+    try {
+      db.ref(`/users/${this.state.userId}`).on('value', res => {
+        let data = res.val();
+        this.setState({ myData: data });
+      });
+    } catch (error) {
+      // console.log(error);
+    }
+  };
 
   addChat = item => {
     this.props.navigation.navigate('Chat', { listChat: item });
-  };
-  onProfile = item => {
-    this.props.navigation.navigate('Profil', { tes: 'lolll' });
   };
 
   loadContacts() {
@@ -87,7 +167,13 @@ class App extends Component {
   }
 
   onMaps = item => {
-    this.props.navigation.navigate('Maps', { mapData: item });
+    const myData = this.state.myData;
+    this.props.navigation.navigate('Maps', {
+      mapData: item,
+      myData: myData,
+      myLatitude: this.state.myLatitude,
+      myLongitude: this.state.myLongitude
+    });
   };
   render() {
     let contactEmail = [];

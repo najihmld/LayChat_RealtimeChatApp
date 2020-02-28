@@ -44,6 +44,22 @@ class BackHome extends Component {
   }
 }
 
+class BackContact extends Component {
+  onBack = () => {
+    this.props.navigationProps.navigate('Contacts');
+  };
+  render() {
+    return (
+      <TouchableOpacity onPress={this.onBack.bind(this)}>
+        <Image
+          source={require('../Assets/icons/back.png')}
+          style={styles.toggle}
+        />
+      </TouchableOpacity>
+    );
+  }
+}
+
 class ChatHeader extends Component {
   state = {
     dialogProfile: false
@@ -190,8 +206,8 @@ const ContactScreen = createStackNavigator({
   Maps: {
     screen: Mapss,
     navigationOptions: ({ navigation }) => ({
-      title: false,
-      headerLeft: <BackHome navigationProps={navigation} />,
+      title: 'Location',
+      headerLeft: <BackContact navigationProps={navigation} />,
       headerStyle: {
         backgroundColor: '#45c8dc'
       },

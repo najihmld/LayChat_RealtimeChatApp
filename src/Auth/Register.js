@@ -40,7 +40,9 @@ class Login extends Component {
             name,
             email,
             avatar,
-            bio
+            bio,
+            latitude: -2.2754241,
+            longitude: 99.4230675
           });
         ToastAndroid.show('Signup success', ToastAndroid.SHORT);
         this.props.navigation.navigate('Login');

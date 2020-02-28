@@ -5,19 +5,94 @@ import {
   Text,
   FlatList,
   Image,
-  TouchableOpacity
+  TouchableOpacity,
+  PermissionsAndroid,
+  Platform,
+  ToastAndroid
 } from 'react-native';
 import Statusbar from '../../Public/Components/GeneralStatusBar';
+import Geolocation from 'react-native-geolocation-service';
 import { app, db } from '../../Config/firebase';
 
 class App extends Component {
+  watchId = null;
   state = {
     userId: app.auth().currentUser.uid,
     data: []
   };
   componentDidMount() {
     this.getData();
+    this.getLocationUpdates();
   }
+
+  hasLocationPermission = async () => {
+    if (
+      Platform.OS === 'ios' ||
+      (Platform.OS === 'android' && Platform.Version < 23)
+    ) {
+      return true;
+    }
+
+    const hasPermission = await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+    );
+
+    if (hasPermission) {
+      return true;
+    }
+
+    const status = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+    );
+
+    if (status === PermissionsAndroid.RESULTS.GRANTED) {
+      return true;
+    }
+
+    if (status === PermissionsAndroid.RESULTS.DENIED) {
+      ToastAndroid.show(
+        'Location permission denied by user.',
+        ToastAndroid.LONG
+      );
+    } else if (status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+      ToastAndroid.show(
+        'Location permission revoked by user.',
+        ToastAndroid.LONG
+      );
+    }
+
+    return false;
+  };
+
+  getLocationUpdates = async () => {
+    const hasLocationPermission = await this.hasLocationPermission();
+    if (!hasLocationPermission) {
+      return;
+    }
+    const userId = this.state.userId;
+    this.setState({ updatesEnabled: true }, () => {
+      this.watchId = Geolocation.watchPosition(
+        position => {
+          let latitude = position.coords.latitude;
+          let longitude = position.coords.longitude;
+          db.ref(`/users/${userId}`).update({ latitude });
+          db.ref(`/users/${userId}`).update({ longitude });
+        },
+        error => {
+          let latitude = -2.2754241;
+          let longitude = 99.4230675;
+          db.ref(`/users/${userId}`).update({ latitude });
+          db.ref(`/users/${userId}`).update({ longitude });
+        },
+        {
+          enableHighAccuracy: true,
+          distanceFilter: 0,
+          interval: 5000,
+          fastestInterval: 2000
+        }
+      );
+    });
+  };
 
   getData = () => {
     const userId = this.state.userId;
@@ -46,6 +121,7 @@ class App extends Component {
         contactData.push(item);
       }
     });
+
     return (
       <View style={styles.wrapper}>
         <Statusbar />
