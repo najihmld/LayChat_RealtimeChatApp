@@ -19,19 +19,12 @@ class App extends Component {
   state = {
     userId: app.auth().currentUser.uid,
     data: [],
-    myData: [],
     contacts: [],
-    myLatitude: '',
-    myLongitude: ''
+    listContacts: []
   };
 
   componentDidMount() {
     this.getData();
-    this.getmyData();
-    this.getLocationUpdates();
-  }
-
-  async componentWillMount() {
     if (Platform.OS === 'android') {
       PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_CONTACTS, {
         title: 'Contacts',
@@ -40,75 +33,8 @@ class App extends Component {
         this.loadContacts();
       });
     } else {
-      this.loadContacts();
     }
   }
-
-  hasLocationPermission = async () => {
-    if (
-      Platform.OS === 'ios' ||
-      (Platform.OS === 'android' && Platform.Version < 23)
-    ) {
-      return true;
-    }
-
-    const hasPermission = await PermissionsAndroid.check(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-    );
-
-    if (hasPermission) {
-      return true;
-    }
-
-    const status = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-    );
-
-    if (status === PermissionsAndroid.RESULTS.GRANTED) {
-      return true;
-    }
-
-    if (status === PermissionsAndroid.RESULTS.DENIED) {
-      ToastAndroid.show(
-        'Location permission denied by user.',
-        ToastAndroid.LONG
-      );
-    } else if (status === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-      ToastAndroid.show(
-        'Location permission revoked by user.',
-        ToastAndroid.LONG
-      );
-    }
-
-    return false;
-  };
-
-  getLocationUpdates = async () => {
-    const hasLocationPermission = await this.hasLocationPermission();
-    if (!hasLocationPermission) {
-      return;
-    }
-    this.setState({ updatesEnabled: true }, () => {
-      this.watchId = Geolocation.watchPosition(
-        position => {
-          this.setState({
-            myLatitude: position.coords.latitude,
-            myLongitude: position.coords.longitude
-          });
-        },
-        error => {
-          this.setState({ myLatitude: error, myLongitude: error });
-          // console.log(error);
-        },
-        {
-          enableHighAccuracy: true,
-          distanceFilter: 0,
-          interval: 5000,
-          fastestInterval: 2000
-        }
-      );
-    });
-  };
 
   getData = () => {
     try {
@@ -117,16 +43,6 @@ class App extends Component {
         const objectToArray = Object.values(data);
         // console.log(objectToArray);
         this.setState({ data: objectToArray });
-      });
-    } catch (error) {
-      // console.log(error);
-    }
-  };
-  getmyData = () => {
-    try {
-      db.ref(`/users/${this.state.userId}`).on('value', res => {
-        let data = res.val();
-        this.setState({ myData: data });
       });
     } catch (error) {
       // console.log(error);
@@ -143,6 +59,34 @@ class App extends Component {
         // console.warn('Permission to access contacts was denied');
       } else {
         this.setState({ contacts });
+
+        Contacts.getAll((err, contacts) => {
+          if (err === 'denied') {
+            // console.warn('Permission to access contacts was denied');
+          } else {
+            this.setState({ contacts });
+            let contactEmail = [];
+            this.state.contacts.map((item, index) => {
+              let emailList = item.emailAddresses;
+              if (emailList.length > 0) {
+                item.emailAddresses.map((item2, index2) => {
+                  let data = Object.values(item2)[2];
+                  contactEmail.push(data);
+                });
+              }
+            });
+            let userId = app.auth().currentUser.uid;
+            let contactData = [];
+            this.state.data.map((item, index) => {
+              contactEmail.map((item2, index2) => {
+                if (item.uid !== userId && item.email === item2) {
+                  contactData.push(item);
+                }
+              });
+            });
+            this.setState({ listContacts: contactData });
+          }
+        });
       }
     });
   }
@@ -163,45 +107,21 @@ class App extends Component {
         throw err;
       }
       // contact has been saved
+      this.loadContacts();
     });
   }
 
   onMaps = item => {
-    const myData = this.state.myData;
     this.props.navigation.navigate('Maps', {
-      mapData: item,
-      myData: myData,
-      myLatitude: this.state.myLatitude,
-      myLongitude: this.state.myLongitude
+      friendId: item.uid
     });
   };
   render() {
-    let contactEmail = [];
-    this.state.contacts.map((item, index) => {
-      let emailList = item.emailAddresses;
-      if (emailList.length > 0) {
-        item.emailAddresses.map((item2, index2) => {
-          let data = Object.values(item2)[2];
-          contactEmail.push(data);
-        });
-      }
-    });
-
-    let userId = app.auth().currentUser.uid;
-    let contactData = [];
-    this.state.data.map((item, index) => {
-      contactEmail.map((item2, index2) => {
-        if (item.uid !== userId && item.email === item2) {
-          contactData.push(item);
-        }
-      });
-    });
-
     return (
       <View style={styles.wrapper}>
         <Statusbar />
         <FlatList
-          data={contactData}
+          data={this.state.listContacts}
           keyExtractor={item => item.id}
           renderItem={({ item, index }) => {
             return (
@@ -274,10 +194,10 @@ const styles = StyleSheet.create({
     borderColor: '#eaeaea',
     // backgroundColor: '#fff',
     paddingTop: 12,
-    paddingLeft: 50,
     flexDirection: 'row',
     paddingBottom: 32,
-    marginTop: 10
+    marginTop: 10,
+    flex: 0.5
   },
   chat__img: {
     height: 60,
@@ -308,7 +228,7 @@ const styles = StyleSheet.create({
     color: '#1e3347'
   },
   listcontact: {
-    width: 280
+    flex: 1
   },
   bio__list: {
     fontFamily: 'Raleway-Medium',
@@ -343,7 +263,7 @@ const styles = StyleSheet.create({
   icon__loc: {
     height: 30,
     width: 30,
-    marginLeft: -20
+    marginRight: 15
   }
   // location: {
   //   justifyContent: 'center',
