@@ -1,4 +1,4 @@
-# LayChat_RealtimeChatApp
+# Lay - Realtime Chat App
 Real-time chat application. Users can also share locations, view contact lists where other users have installed the same application. Built using React Native and Firebase.
 
 Download app via Gdrive: http://bit.ly/LayChat <br/>
