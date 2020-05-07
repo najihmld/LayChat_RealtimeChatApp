@@ -1,8 +1,8 @@
 # LayChat_RealtimeChatApp
 Real-time chat application. Users can also share locations, view contact lists where other users have installed the same application. Built using React Native and Firebase.
 
-Demo app: http://bit.ly/LayChat
-or Google Play Store : https://play.google.com/store/apps/details?id=com.laychat&hl=in
+Download app via Gdrive: http://bit.ly/LayChat <br/>
+or Google Play Store : https://bit.ly/laychatapp
 
-#Screenshot
-<img src="https://raw.githubusercontent.com/najihmld/LayChat_RealtimeChatApp/master/1.png" width="300"/>
+# Screenshot
+<img  align="center"> src="https://raw.githubusercontent.com/najihmld/LayChat_RealtimeChatApp/master/1.png" width="100%"/>
