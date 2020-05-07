@@ -5,4 +5,4 @@ Download app via Gdrive: http://bit.ly/LayChat <br/>
 or Google Play Store : https://bit.ly/laychatapp
 
 # Screenshot
-<img  align="center"> src="https://raw.githubusercontent.com/najihmld/LayChat_RealtimeChatApp/master/1.png" width="100%"/>
+<img align="center" src="https://raw.githubusercontent.com/najihmld/LayChat_RealtimeChatApp/master/1.png" width="100%"/>
